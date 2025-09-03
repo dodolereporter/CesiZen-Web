@@ -25,29 +25,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node 20 + cache pnpm
+      # 1) Node sans cache pnpm (sinon il essaie d'appeler pnpm avant installation)
+      - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
-      # Installe pnpm (officiel)
+      # 2) Installer pnpm
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
           run_install: false
 
-      # Fallback si jamais pnpm n’est pas sur le PATH (rare mais utile pour diagnostiquer)
-      - name: Ensure pnpm is available
-        run: |
-          if ! command -v pnpm >/dev/null 2>&1; then
-            echo "pnpm not found, installing globally..."
-            npm i -g pnpm@9
-          fi
-          pnpm -v
+      # 3) Configurer un store pnpm local et le cacher
+      - name: Configure pnpm store path
+        run: pnpm config set store-dir ~/.pnpm-store
 
-      # (optionnel) Cache du cache Next pour accélérer les builds
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      # (facultatif) Cache du cache Next pour accélérer les builds
       - name: Cache .next/cache
         uses: actions/cache@v4
         with:
@@ -56,14 +59,9 @@ jobs:
           restore-keys: |
             next-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
+      # 4) Install & build
       - name: Install deps
         run: pnpm install --frozen-lockfile
-
-      # - name: Lint
-      #   run: pnpm run lint --if-present
-
-      # - name: Type check
-      #   run: pnpm run typecheck --if-present
 
       - name: Build Next.js
         run: pnpm run build
