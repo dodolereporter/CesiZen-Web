@@ -1,4 +1,4 @@
-name: PR CI (web - Next.js)
+name: PR CI (web - build)
 
 on:
   pull_request:
