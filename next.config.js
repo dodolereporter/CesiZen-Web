@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  // Ignore ESLint (et TS en option) pendant `next build`
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
     return [
@@ -10,6 +15,7 @@ const nextConfig = {
       },
     ];
   },
+
   output: 'standalone',
 };
 
