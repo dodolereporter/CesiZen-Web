@@ -1,0 +1,67 @@
+name: PR CI (web - build)
+
+on:
+  pull_request:
+    branches: [ master, preprod, dev ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-ci-web-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (PR - Next.js)
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 1) Node sans cache pnpm (sinon il essaie d'appeler pnpm avant installation)
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 2) Installer pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      # 3) Configurer un store pnpm local et le cacher
+      - name: Configure pnpm store path
+        run: pnpm config set store-dir ~/.pnpm-store
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      # (facultatif) Cache du cache Next pour accélérer les builds
+      - name: Cache .next/cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('next.config.*', 'tsconfig.json') }}
+          restore-keys: |
+            next-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      # 4) Install & build
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Next.js
+        run: pnpm run build
