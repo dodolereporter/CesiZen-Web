@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+.vscode
+.idea
+.env*
+README.md
+.gitignore

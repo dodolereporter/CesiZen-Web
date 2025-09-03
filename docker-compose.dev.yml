@@ -1,0 +1,23 @@
+services:
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    command: [ "npm", "run", "dev" ]
+    restart: unless-stopped
+    networks:
+      - app-network-dev
+
+networks:
+  app-network-dev:
+    driver: bridge

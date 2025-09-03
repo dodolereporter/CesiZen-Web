@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  frontend-preprod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://api-preprod:8080
+    ports:
+      - "80:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api-preprod:8080
+    restart: unless-stopped
+    networks:
+      - app-network-preprod
+
+networks:
+  app-network-preprod:
+    driver: bridge
