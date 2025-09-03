@@ -1,0 +1,62 @@
+name: CD Prod (Coolify - frontend)
+
+on:
+  push:
+    branches: [ master ] # ou main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-prod-frontend-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy frontend (prod) via Coolify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Déclenchement via l'API Coolify
+      - name: Trigger Coolify deploy (API)
+        id: deploy_api
+        env:
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_SERVICE_UUID: ${{ secrets.COOLIFY_FRONT_PROD_UUID }}
+          COOLIFY_BASE_URL: http://coolify.cyber-dodo.fr   # ← mets le bon domaine + https
+        run: |
+          set -euo pipefail
+          URL="${COOLIFY_BASE_URL%/}/api/v1/deploy?uuid=${COOLIFY_SERVICE_UUID}&force=false"
+          echo "→ POST $URL"
+          http_code=$(curl -sS -L -o /tmp/resp.json -w "%{http_code}" \
+            -X POST "$URL" \
+            -H "Authorization: Bearer ${COOLIFY_API_TOKEN}" \
+            -H "Content-Type: application/json" || true)
+          echo "HTTP $http_code"
+          echo "Response body:"
+          cat /tmp/resp.json || true
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::warning::Échec de l'appel API (HTTP $http_code)."
+            exit 2
+          fi
+          echo "✅ Déploiement (API) déclenché."
+
+      # Fallback : webhook si l'API échoue (optionnel)
+      - name: Trigger Coolify deploy (Webhook fallback)
+        if: failure()  # ne s'exécute que si l'étape API échoue
+        env:
+          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_FRONT_PROD_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${COOLIFY_WEBHOOK_URL:-}" ]; then
+            echo "Pas d'URL de webhook configurée, arrêt."
+            exit 1
+          fi
+          echo "→ POST $COOLIFY_WEBHOOK_URL"
+          curl -fsSL -X POST "$COOLIFY_WEBHOOK_URL"
+          echo "✅ Webhook envoyé."
