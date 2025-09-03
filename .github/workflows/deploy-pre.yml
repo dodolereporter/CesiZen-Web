@@ -1,0 +1,35 @@
+name: CD Preprod (Coolify - frontend)
+
+on:
+  push:
+    branches: [ preprod ]   # déclenche à chaque push sur preprod
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-preprod-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy frontend (preprod) via Coolify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ⚡ Déclenche le déploiement via l'API Coolify
+      - name: Trigger Coolify deploy
+        env:
+          COOLIFY_API_TOKEN:   ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_SERVICE_UUID: ${{ secrets.COOLIFY_FRONT_PREPROD_UUID }}
+        run: |
+          set -euo pipefail
+          BASE_URL="http://coolify.cyber-dodo.fr/api/v1"
+          echo "🚀 Déploiement en cours sur Coolify (frontend préprod)…"
+          curl -fsS -X POST "${BASE_URL}/deploy?uuid=${COOLIFY_SERVICE_UUID}&force=false" \
+            -H "Authorization: Bearer ${COOLIFY_API_TOKEN}" \
+            -H "Content-Type: application/json"
+          echo "✅ Déploiement déclenché (sans attente du build)."
