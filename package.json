@@ -1,15 +1,12 @@
 {
-  "name": "next-pages-template",
-  "version": "0.1.0",
+  "name": "cesizen-web",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint --fix",
-    "deploy:dev": "node -e \"process.platform === 'win32' ? require('child_process').spawn('cmd', ['/c', 'scripts\\deploy.bat', 'dev'], {stdio: 'inherit'}) : require('child_process').spawn('sh', ['scripts/deploy.sh', 'dev'], {stdio: 'inherit'})\"",
-    "deploy:preprod": "node -e \"process.platform === 'win32' ? require('child_process').spawn('cmd', ['/c', 'scripts\\deploy.bat', 'preprod'], {stdio: 'inherit'}) : require('child_process').spawn('sh', ['scripts/deploy.sh', 'preprod'], {stdio: 'inherit'})\"",
-    "deploy:prod": "node -e \"process.platform === 'win32' ? require('child_process').spawn('cmd', ['/c', 'scripts\\deploy.bat', 'prod'], {stdio: 'inherit'}) : require('child_process').spawn('sh', ['scripts/deploy.sh', 'prod'], {stdio: 'inherit'})\""
+    "dev": "cross-env NODE_ENV=development next dev",
+    "dev:turbo": "cross-env NODE_ENV=development NEXT_DISABLE_TURBOPACK=1 next dev",
+    "build": "cross-env NODE_ENV=production next build",
+    "start": "cross-env NODE_ENV=production next start"
   },
   "dependencies": {
     "@heroui/accordion": "^2.2.19",
@@ -89,6 +86,7 @@
     "@typescript-eslint/eslint-plugin": "8.31.1",
     "@typescript-eslint/parser": "8.31.1",
     "autoprefixer": "10.4.21",
+    "cross-env": "^10.0.0",
     "eslint": "9.25.1",
     "eslint-config-prettier": "10.1.2",
     "eslint-plugin-import": "2.31.0",
