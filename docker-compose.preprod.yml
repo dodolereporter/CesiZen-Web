@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
       args:
         NEXT_PUBLIC_API_URL: http://cesizen-api-pre.cyber-dodo.fr
     environment:
