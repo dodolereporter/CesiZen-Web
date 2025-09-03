@@ -25,19 +25,35 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node (20) + pnpm
+      - name: Setup Node 20 + cache pnpm
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Enable Corepack (pnpm)
-        run: |
-          corepack enable
-          corepack prepare pnpm@9 --activate
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      # (optionnel) Cache du cache Next pour accélérer les builds
+      - name: Cache .next/cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('next.config.*', 'tsconfig.json') }}
+          restore-keys: |
+            next-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
       - name: Install deps
         run: pnpm install --frozen-lockfile
+
+      # (optionnel) Lint / Typecheck si tu as les scripts
+      # - name: Lint
+      #   run: pnpm run lint --if-present
+      # - name: Type check
+      #   run: pnpm run typecheck --if-present
 
       - name: Build Next.js
         run: pnpm run build
